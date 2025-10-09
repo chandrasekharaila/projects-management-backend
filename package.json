@@ -1,0 +1,21 @@
+{
+  "name": "basecamp",
+  "version": "1.0.0",
+  "description": "project management backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "backend",
+    "project-management"
+  ],
+  "author": "aila chandra sekhar",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^24.7.0",
+    "prettier": "^3.6.2"
+  }
+}
