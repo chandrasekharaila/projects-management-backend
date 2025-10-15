@@ -14,10 +14,10 @@ const sendEmail = async (options) => {
 
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_TRAP_SMTP_HOST,
-    port: MAIL_TRAP_SMTP_PORT,
+    port: process.env.MAIL_TRAP_SMTP_PORT,
     auth: {
       user: process.env.MAIL_TRAP_SMTP_USER,
-      pass: MAIL_TRAP_SMTP_PASS,
+      pass: process.env.MAIL_TRAP_SMTP_PASS,
     },
   });
 

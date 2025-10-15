@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { type } from "os";
 const userSchema = new Schema(
   {
     avatar: {
@@ -39,13 +40,18 @@ const userSchema = new Schema(
     },
     refreshToken: {
       type: String,
-      required: true,
     },
     forgotPasswordToken: {
       type: String,
     },
     forgotPasswordExpiry: {
       type: Date,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationTokenExpiry: {
+      type: String,
     },
   },
   { timestamps: true },
@@ -87,7 +93,7 @@ userSchema.methods.generateTemporaryToken = function () {
   const unHashedToken = crypto.randomBytes(20).toString("hex");
 
   const hasedToken = crypto
-    .createHmac("sha256")
+    .createHash("sha256")
     .update(unHashedToken)
     .digest("hex");
 

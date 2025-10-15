@@ -26,16 +26,11 @@ app.use(
   }),
 );
 
-app.get("/roadmaps", (req, res) => {
-  res.status(200).json({
-    roadmap1: "upsc roadmap",
-    roadmap2: "optional roadmap",
-  });
-});
-
 //import the routes
 import healthCheckRouter from "./routes/healthCheck.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
 app.use("/api/v1/healthcheck", healthCheckRouter);
+app.use("/api/v1/auth", authRouter);
 
 export default app;
