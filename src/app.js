@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 const app = express();
 
 app.use(
@@ -14,6 +15,8 @@ app.use(
     limit: "16kb",
   }),
 );
+
+app.use(cookieParser());
 
 app.use(express.static("public"));
 

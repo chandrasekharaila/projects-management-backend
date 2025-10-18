@@ -10,7 +10,6 @@ const generateAccessRefreshTokens = async (userId) => {
     const existedUser = await User.findById(userId);
     const accessToken = existedUser.generateAccessToken();
     const refreshToken = existedUser.generateRefreshToken();
-
     existedUser.refreshToken = refreshToken;
     await existedUser.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
@@ -27,7 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (userExist) {
-    return res.status(409).json(new ApiError(409, "user already exist"));
+    return res.status(409).json(new ApiError(400, "user already exists"));
   }
 
   const user = await User.create({
@@ -72,4 +71,49 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser };
+const login = asyncHandler(async (req, res) => {
+  const { emailId, password } = req.body;
+
+  if (!emailId || !password) {
+    return res.status(400).json(new ApiError(400, "All fields are required"));
+  }
+
+  const user = await User.findOne({ emailId });
+
+  if (!user) {
+    return res.status(400).json(new ApiError(400, "User doesn't exist"));
+  }
+
+  const passwordCorrect = await user.isPasswordCorrect(password);
+
+  if (!passwordCorrect) {
+    return res.status(400).json(new ApiError(400, "Password incorrect"));
+  }
+
+  const { accessToken, refreshToken } = await generateAccessRefreshTokens(
+    user._id,
+  );
+
+  const options = {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: false,
+  };
+
+  const sanitizedUser = user.toObject();
+  delete sanitizedUser.password;
+  delete sanitizedUser.refreshToken;
+
+  return res
+    .cookie("refreshToken", refreshToken, options)
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user: sanitizedUser, accessToken },
+        "Successfully logged in",
+      ),
+    );
+});
+
+export { registerUser, login };
