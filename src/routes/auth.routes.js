@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   verifyEmail,
   resendVerificationMail,
+  refreshAccessToken,
 } from "../controllers/auth.controllers.js";
 import { loginValidator } from "../validators/auth.validators.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -21,5 +22,6 @@ router.route("/verify-email/:verificationToken").get(verifyEmail);
 router
   .route("/resend-email-verification")
   .get(verifyJWT, resendVerificationMail);
+router.route("/refresh-token").post(verifyJWT, refreshAccessToken);
 
 export default router;

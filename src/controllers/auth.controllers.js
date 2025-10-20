@@ -5,6 +5,7 @@ import { User } from "../models/user.models.js";
 import { sendEmail } from "../utils/mail.js";
 import { emailVerificationMailGenerator } from "../utils/mail.js";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 const generateAccessRefreshTokens = async (userId) => {
   try {
@@ -232,6 +233,57 @@ const resendVerificationMail = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Email verification mail sent"));
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  //get refreshtoken
+  //if no rt error
+  //decode rt to get id of user
+  //gen at and rt
+  //res at anf rt and set them in cookies
+
+  const inputRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!inputRefreshToken) {
+    throw new ApiError(401, "unauthorized access");
+  }
+
+  const decodedToken = jwt.verify(
+    inputRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+  );
+
+  const user = await User.findById(decodedToken._id);
+
+  if (!user) {
+    throw new ApiError("Invalid token");
+  }
+
+  if (user.refreshToken !== inputRefreshToken) {
+    throw new ApiError("Unauthorized access");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessRefreshTokens(
+    user._id,
+  );
+
+  const options = {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(200, {
+        accessToken,
+        refreshToken,
+      }),
+      "successfully created the tokens",
+    );
+});
+
 export {
   registerUser,
   login,
@@ -239,4 +291,5 @@ export {
   getCurrentUser,
   verifyEmail,
   resendVerificationMail,
+  refreshAccessToken,
 };
