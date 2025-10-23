@@ -1,7 +1,17 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/auth.controllers.js";
+import {
+  changePassword,
+  forgotPassword,
+  registerUser,
+  resetPassword,
+} from "../controllers/auth.controllers.js";
 import { validate } from "../middlewares/validation.middlewares.js";
-import { userRegisterValidator } from "../validators/auth.validators.js";
+import {
+  changePasswordValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  userRegisterValidator,
+} from "../validators/auth.validators.js";
 import {
   login,
   logout,
@@ -23,5 +33,13 @@ router
   .route("/resend-email-verification")
   .get(verifyJWT, resendVerificationMail);
 router.route("/refresh-token").post(verifyJWT, refreshAccessToken);
-
+router
+  .route("/forgot-password")
+  .post(forgotPasswordValidator(), validate, forgotPassword);
+router
+  .route("/reset-password/:unHashedToken")
+  .post(resetPasswordValidator(), validate, resetPassword);
+router
+  .route("/change-password")
+  .post(verifyJWT, changePasswordValidator(), validate, changePassword);
 export default router;

@@ -45,4 +45,54 @@ const loginValidator = (req, res, next) => {
   ];
 };
 
-export { userRegisterValidator, loginValidator };
+const forgotPasswordValidator = () => {
+  return [
+    body("emailId")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Invalid input "),
+  ];
+};
+
+const resetPasswordValidator = () => {
+  return [
+    body("emailId")
+      .trim()
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Invalid input "),
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("password should not be empty")
+      .isLength({ min: 8 })
+      .withMessage("Password should be of minimum 8 characters"),
+  ];
+};
+
+const changePasswordValidator = () => {
+  return [
+    body("oldPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("password should not be empty")
+      .isLength({ min: 8 })
+      .withMessage("Password should be of minimum 8 characters"),
+    body("newPassword")
+      .trim()
+      .notEmpty()
+      .withMessage("password should not be empty")
+      .isLength({ min: 8 })
+      .withMessage("Password should be of minimum 8 characters"),
+  ];
+};
+export {
+  userRegisterValidator,
+  loginValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  changePasswordValidator,
+};
