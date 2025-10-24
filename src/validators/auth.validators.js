@@ -1,6 +1,6 @@
 import { body } from "express-validator";
 
-const userRegisterValidator = (req, res, next) => {
+const userRegisterValidator = () => {
   return [
     body("emailId")
       .trim()
@@ -27,7 +27,7 @@ const userRegisterValidator = (req, res, next) => {
   ];
 };
 
-const loginValidator = (req, res, next) => {
+const loginValidator = () => {
   return [
     body("emailId")
       .trim()
