@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { UserRolesEnum } from "../utils/constants.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import ApiError from "../utils/ApiError.js";
+import { User } from "../models/user.models.js";
 
 const addProject = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -101,4 +102,208 @@ const getProjectById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, project, "Project fetched successfully"));
 });
 
-export { addProject, getProjects, getProjectById };
+const updateProject = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!projectId) {
+    throw new ApiError(400, "Project Id is required");
+  }
+
+  const { name, description } = req.body;
+
+  const project = await Project.findByIdAndUpdate(
+    projectId,
+    {
+      name,
+      description,
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!project) {
+    throw new ApiError(400, "Failed to update the project");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, project, "Project updated successfully"));
+});
+
+const deleteProject = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!projectId) {
+    throw new ApiError(400, "Project Id is required to delete the project");
+  }
+
+  const project = await Project.findByIdAndDelete(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, project, "Project has been deleted successfully"),
+    );
+});
+
+const addProjectMember = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const { emailId } = req.body;
+
+  const newProjectMember = await User.findOne({ emailId });
+
+  if (!newProjectMember) {
+    throw new ApiError("New Project memeber is not registered user");
+  }
+
+  const projectMember = await ProjectMember.create({
+    project: projectId,
+    user: newProjectMember._id,
+    role: UserRolesEnum.MEMBER,
+  });
+
+  if (!projectMember) {
+    throw new ApiError("Failed to add a member");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        projectMember,
+        "Successfully added a member to the project",
+      ),
+    );
+});
+
+const changeProjectMemberRole = asyncHandler(async (req, res) => {
+  const { projectId, userId } = req.params;
+  const { newRole } = req.body;
+
+  const projectMember = await ProjectMember.find({
+    project: projectId,
+    user: userId,
+  });
+
+  const updatedProjectMemberRole = await ProjectMember.findByIdAndUpdate(
+    projectMember._id,
+    {
+      role: newRole,
+    },
+    {
+      new: true,
+    },
+  );
+
+  if (!updatedProjectMemberRole) {
+    throw new ApiError(400, "Failed to update the role");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedProjectMemberRole,
+        "Successfully updated the role",
+      ),
+    );
+});
+
+const removeProjectMember = asyncHandler(async (req, res) => {
+  const { projectId, userId } = req.params;
+
+  const projectMember = await ProjectMember.findOne({
+    project: projectId,
+    user: userId,
+  });
+
+  if (!projectMember) {
+    throw new ApiError(404, "Project member not found");
+  }
+
+  const deletedProjectMember = await ProjectMember.findByIdAndDelete(
+    projectMember._id,
+  );
+
+  if (!deletedProjectMember) {
+    throw new ApiError(404, "Failed to remove the user from project");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        deletedProjectMember,
+        "Successfully removed the user from user",
+      ),
+    );
+});
+
+const getProjectMembers = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+
+  if (!projectId) {
+    throw new ApiError(404, "Project id is required");
+  }
+
+  const projectMembers = await ProjectMember.aggregate([
+    {
+      $match: {
+        project: projectId,
+      },
+    },
+    {
+      $lookup: {
+        from: "User",
+        localField: "user",
+        foreignField: "_id",
+        as: "userDetails",
+      },
+    },
+    {
+      $unwind: "$userDetails",
+    },
+    {
+      $project: {
+        _id: 0,
+        project: 1,
+        user: 0,
+        userDetails: 1,
+        role: 1,
+      },
+    },
+  ]);
+
+  if (!projectMembers) {
+    throw new ApiError(400, "No project members found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        projectMembers,
+        "Fetched project members successfully",
+      ),
+    );
+});
+export {
+  addProject,
+  getProjects,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  addProjectMember,
+  changeProjectMemberRole,
+  removeProjectMember,
+  getProjectMembers,
+};
