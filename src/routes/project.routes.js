@@ -26,17 +26,7 @@ router
   .route("/add-project")
   .post(verifyJWT, addProjectValidator(), validate, addProject);
 
-router
-  .route("/get-projects")
-  .get(
-    verifyJWT,
-    verifyProjectPermission([
-      UserRolesEnum.PROJECT_ADMIN,
-      UserRolesEnum.MEMBER,
-      UserRolesEnum.ADMIN,
-    ]),
-    getProjects,
-  );
+router.route("/get-projects").get(verifyJWT, getProjects);
 router
   .route("/get-project/:projectId")
   .get(

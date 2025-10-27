@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 const app = express();
 
+app.use("/images", express.static("public/images"));
 app.use(
   express.json({
     limit: "16kb",
@@ -34,9 +35,11 @@ import healthCheckRouter from "./routes/healthCheck.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import apiErrorHandler from "./middlewares/errors.middleware.js";
 import projectRouter from "./routes/project.routes.js";
+import taskRouter from "./routes/task.routes.js";
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/projects", projectRouter);
+app.use("/api/v1/tasks", taskRouter);
 app.use(apiErrorHandler);
 
 export default app;
