@@ -60,9 +60,30 @@ const getTasks = asyncHandler(async (req, res) => {
     throw new ApiError(400, "project id is required");
   }
 
-  const tasks = await Task.find({
-    project: projectId,
-  });
+  const tasks = await Task.aggregate([
+    {
+      $match: {
+        project: projectId,
+      },
+    },
+    {
+      $lookup: {
+        from: "Subtask",
+        localField: "_id",
+        foreignField: "Task",
+        as: "subtasks",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        description: 1,
+        project: 1,
+        subtasks: 1,
+      },
+    },
+  ]);
 
   if (tasks.length === 0) {
     throw new ApiError(404, "No tasks found");
