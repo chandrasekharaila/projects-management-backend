@@ -177,6 +177,9 @@ const updateSubtask = asyncHandler(async (req, res) => {
         isCompleted,
       },
     },
+    {
+      new: true,
+    },
   );
 
   if (!subtask) {
