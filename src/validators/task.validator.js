@@ -1,6 +1,4 @@
 import { body } from "express-validator";
-import { asyncHandler } from "../utils/AsyncHandler";
-
 const createTaskValidator = () => {
   return [
     body("title").trim().notEmpty().withMessage("Task Title is required"),
@@ -33,4 +31,27 @@ const updateTaskValidator = () => {
   ];
 };
 
-export { createTaskValidator, updateTaskValidator };
+const createSubtaskValidator = () => {
+  return [
+    body("title")
+      .trim()
+      .notEmpty()
+      .withMessage("Subtask title should not be empty"),
+  ];
+};
+
+const updateSubtaskValidator = () => {
+  return [
+    body("title").trim().notEmpty().withMessage("title should not be empty"),
+    body("isCompleted")
+      .trim()
+      .isBoolean()
+      .withMessage("isCompleted value should be boolean "),
+  ];
+};
+export {
+  createTaskValidator,
+  updateTaskValidator,
+  createSubtaskValidator,
+  updateSubtaskValidator,
+};

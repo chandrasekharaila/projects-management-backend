@@ -2,19 +2,25 @@ import { Router } from "express";
 import {
   verifyJWT,
   verifyProjectPermission,
-} from "../middlewares/auth.middleware";
+} from "../middlewares/auth.middleware.js";
 import {
   createTaskValidator,
   updateTaskValidator,
-} from "../validators/task.validator";
-import { validate } from "../middlewares/validation.middlewares";
+  createSubtaskValidator,
+  updateSubtaskValidator,
+} from "../validators/task.validator.js";
+import { validate } from "../middlewares/validation.middlewares.js";
 import {
   createTask,
   getTasks,
   getTaskById,
   updateTask,
-} from "../controllers/task.Controller";
-import { UserRolesEnum } from "../utils/constants";
+  deleteTask,
+  createSubtask,
+  updateSubtask,
+  deleteSubtask,
+} from "../controllers/task.Controller.js";
+import { UserRolesEnum } from "../utils/constants.js";
 
 const router = Router();
 router
@@ -56,7 +62,44 @@ router
   .put(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    updateTaskValidator(),
     validate,
     updateTask,
+  );
+
+router
+  .route("/delete-task/:projectId/:taskId")
+  .delete(
+    verifyJWT,
+    verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN]),
+    deleteTask,
+  );
+
+router
+  .route("/create-subtask/:projectId/:taskId")
+  .post(
+    verifyJWT,
+    verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    createSubtaskValidator(),
+    validate,
+    createSubtask,
+  );
+
+router
+  .router("update-subtask/:projectId/:taskId/:subtaskId")
+  .post(
+    verifyJWT,
+    verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.ADMIN]),
+    updateSubtaskValidator(),
+    validate,
+    updateSubtask,
+  );
+
+router
+  .route("/delete-subtask/projectId/taskId/subtaskId")
+  .delete(
+    verifyJWT,
+    verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    deleteSubtask,
   );
 export default router;
