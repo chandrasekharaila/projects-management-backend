@@ -13,6 +13,7 @@ import {
   addProjectMember,
   changeProjectMemberRole,
   getProjectMembers,
+  removeProjectMember,
 } from "../controllers/project.controllers.js";
 import {
   addProjectValidator,
@@ -23,42 +24,37 @@ import { AvailableUSerRole, UserRolesEnum } from "../utils/constants.js";
 const router = Router();
 
 router
-  .route("/add-project")
+  .route("/")
+  .get(verifyJWT, getProjects)
   .post(verifyJWT, addProjectValidator(), validate, addProject);
 
-router.route("/get-projects").get(verifyJWT, getProjects);
 router
-  .route("/get-project/:projectId")
+  .route("/:projectId")
   .get(
     verifyJWT,
     verifyProjectPermission([
+      UserRolesEnum.ADMIN,
       UserRolesEnum.PROJECT_ADMIN,
       UserRolesEnum.MEMBER,
-      UserRolesEnum.ADMIN,
     ]),
     getProjectById,
-  );
-
-router
-  .route("/update-project/:projectId")
-  .put(
+  )
+  .patch(
     verifyJWT,
-    verifyProjectPermission(UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN),
+    verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.ADMIN]),
     projectUpdateValidator(),
     validate,
     updateProject,
-  );
-
-router
-  .route("/delete-project/:projectId")
+  )
   .delete(
     verifyJWT,
-    verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.ADMIN]),
     deleteProject,
   );
 
 router
-  .route("/add-project-member/:projectId")
+  .route("/:projectId/member")
+  .get(verifyJWT, verifyProjectPermission(AvailableUSerRole), getProjectMembers)
   .post(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
@@ -68,26 +64,16 @@ router
   );
 
 router
-  .route("/change-role/:projectId/:userId")
-  .put(
+  .route("/:projectId/members/:userId")
+  .patch(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
     changeProjectMemberRole,
-  );
-
-router
-  .route("/delete-member/:projectId/:userId")
+  )
   .delete(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
-    deleteProject,
+    removeProjectMember,
   );
 
-router
-  .route("/get-project-members/:projectId")
-  .get(
-    verifyJWT,
-    verifyProjectPermission(AvailableUSerRole),
-    getProjectMembers,
-  );
 export default router;

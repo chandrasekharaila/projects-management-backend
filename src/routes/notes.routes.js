@@ -7,6 +7,8 @@ import {
   createNotes,
   updateNotes,
   deleteNote,
+  getNotes,
+  getNotesById,
 } from "../controllers/notes.controller.js";
 import {
   verifyJWT,
@@ -17,7 +19,17 @@ import { validate } from "../middlewares/validation.middlewares.js";
 const router = Router();
 
 router
-  .route("/create-route")
+  .route("/:projectId")
+  .get(
+    verifyJWT,
+    verifyProjectPermission([
+      UserRolesEnum.PROJECT_ADMIN,
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.MEMBER,
+    ]),
+    validate,
+    getNotes,
+  )
   .post(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
@@ -27,20 +39,28 @@ router
   );
 
 router
-  .route("/delete-notes/:projectId/:noteId")
+  .route("/projectId/:noteId")
+  .get(
+    verifyJWT,
+    verifyProjectPermission([
+      UserRolesEnum.PROJECT_ADMIN,
+      UserRolesEnum.ADMIN,
+      UserRolesEnum.MEMBER,
+    ]),
+    validate,
+    getNotesById,
+  )
   .post(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
     updateNotesValidator(),
     validate,
     updateNotes,
-  );
-
-router
-  .route("/delete-note/:projectId/:noteId")
+  )
   .delete(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
     deleteNote,
   );
+
 export default router;

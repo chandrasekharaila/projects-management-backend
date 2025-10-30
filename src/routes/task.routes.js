@@ -19,22 +19,13 @@ import {
   createSubtask,
   updateSubtask,
   deleteSubtask,
-} from "../controllers/task.Controller.js";
+} from "../controllers/task.controller.js";
 import { UserRolesEnum } from "../utils/constants.js";
 
 const router = Router();
-router
-  .route("/create-task/:projectId")
-  .post(
-    verifyJWT,
-    verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
-    createTaskValidator(),
-    validate,
-    createTask,
-  );
 
 router
-  .route("/get-tasks/:projectId")
+  .route("/:projectId")
   .get(
     verifyJWT,
     verifyProjectPermission([
@@ -43,6 +34,13 @@ router
       UserRolesEnum.MEMBER,
     ]),
     getTasks,
+  )
+  .post(
+    verifyJWT,
+    verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
+    createTaskValidator(),
+    validate,
+    createTask,
   );
 
 router
@@ -55,20 +53,14 @@ router
       UserRolesEnum.PROJECT_ADMIN,
     ]),
     getTaskById,
-  );
-
-router
-  .route("/update-task/:projectId/:taskId")
+  )
   .put(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
     updateTaskValidator(),
     validate,
     updateTask,
-  );
-
-router
-  .route("/delete-task/:projectId/:taskId")
+  )
   .delete(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN]),
@@ -76,7 +68,7 @@ router
   );
 
 router
-  .route("/create-subtask/:projectId/:taskId")
+  .route("/:projectId/:taskId/subtasks")
   .post(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
@@ -86,20 +78,18 @@ router
   );
 
 router
-  .router("update-subtask/:projectId/:taskId/:subtaskId")
-  .post(
+  .router(":projectId/:taskId/substasks/:subtaskId")
+  .patch(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.PROJECT_ADMIN, UserRolesEnum.ADMIN]),
     updateSubtaskValidator(),
     validate,
     updateSubtask,
-  );
-
-router
-  .route("/delete-subtask/projectId/taskId/subtaskId")
+  )
   .delete(
     verifyJWT,
     verifyProjectPermission([UserRolesEnum.ADMIN, UserRolesEnum.PROJECT_ADMIN]),
     deleteSubtask,
   );
+
 export default router;
