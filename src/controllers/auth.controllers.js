@@ -6,7 +6,8 @@ import { forgotPasswordMailGen, sendEmail } from "../utils/mail.js";
 import { emailVerificationMailGenerator } from "../utils/mail.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-
+import { getRedisClient } from "../db/redisClient.js";
+const redisClient = getRedisClient();
 const generateAccessRefreshTokens = async (userId) => {
   try {
     const existedUser = await User.findById(userId);
@@ -148,15 +149,36 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+  const casheKey = `user:${req.user._id}`;
+  try {
+    const cachedUser = await redisClient.get(casheKey);
+
+    if (!cachedUser) {
+      const user = JSON.stringify(req.user);
+      await redisClient.set(casheKey, user, { EX: 3600 });
+
+      return res
+        .status(200)
+        .json(200, { user: req.user }, "user details fetched successfully");
+    }
+
+    const user = JSON.parse(cachedUser);
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { user: req.user },
+          "User details fetched succesfully",
+        ),
+      );
+  } catch (error) {
+    console.error("redis client interaction failed", error);
+  }
+
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { user: req.user },
-        "user details fetched successfully",
-      ),
-    );
+    .json(200, { user: req.user }, "User details successfully");
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {

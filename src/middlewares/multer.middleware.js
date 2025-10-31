@@ -16,7 +16,3 @@ export const upload = multer({
     fileSize: 1 * 1000 * 1000,
   },
 });
-
-//single file upload --> upload.single("avatar")
-//multiple file under same field in single array --> upload.array("avatar", 10)
-//different fields of files --> upload.fields({name: "profileAvatar", maxCount: 1},{ name: "postsImages", maxCount: 5})

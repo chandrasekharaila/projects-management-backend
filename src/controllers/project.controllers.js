@@ -5,6 +5,7 @@ import { UserRolesEnum } from "../utils/constants.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
+const redisClient = getRedisClient();
 
 const addProject = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -28,6 +29,19 @@ const addProject = asyncHandler(async (req, res) => {
 
 const getProjects = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+  const cacheKey = `userProjects:${userId}`;
+
+  try {
+    let cacheData = await redisClient.get(cacheKey);
+    if (cacheData) {
+      let projects = JSON.parse(cacheData);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, projects, "Fetched projects successfully"));
+    }
+  } catch (error) {
+    console.error("redis client interaction failed", error);
+  }
 
   const projects = await ProjectMember.aggregate([
     {
@@ -79,6 +93,17 @@ const getProjects = asyncHandler(async (req, res) => {
     },
   ]);
 
+  if (!projects) {
+    throw new ApiError(404, "Projects not found");
+  }
+
+  try {
+    let cacheData = JSON.stringify(projects);
+    await redisClient.set(cacheKey, cacheData, { EX: 3600 });
+  } catch (error) {
+    console.error("redis client interaction failed", error);
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, projects, "Fetched the projects successfully"));
@@ -86,20 +111,46 @@ const getProjects = asyncHandler(async (req, res) => {
 
 const getProjectById = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+  const casheKey = `project:${projectId}`;
+  let project = null;
 
-  if (!projectId) {
-    throw new ApiError(404, "project id is required");
+  try {
+    let cashedProject = await redisClient.get(casheKey);
+    if (cashedProject) {
+      project = JSON.parse(cashedProject);
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            project,
+            "project has been fetched successfully",
+          ),
+        );
+    }
+  } catch (error) {
+    console.error("redis client interaction failed", error);
   }
 
-  const project = await Project.findById(projectId);
+  project = await Project.findById(projectId);
 
   if (!project) {
-    throw new ApiError(400, "Project not found");
+    throw new ApiError(404, "Project not found");
+  }
+
+  try {
+    let cashedProject = JSON.stringify(project);
+    await redisClient.set(casheKey, cashedProject, { EX: 3600 });
+  } catch (error) {
+    console.error("redis client interaction failed", error);
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, project, "Project fetched successfully"));
+    .json(
+      new ApiResponse(200, project, "Project has been fetched successfully"),
+    );
 });
 
 const updateProject = asyncHandler(async (req, res) => {
