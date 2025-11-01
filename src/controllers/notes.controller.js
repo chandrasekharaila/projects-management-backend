@@ -1,8 +1,10 @@
+import { getRedisClient } from "../db/redisClient";
 import { Note } from "../models/notes.models";
 import { Project } from "../models/project.models";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/AsyncHandler";
+const redisClient = getRedisClient();
 
 const createNotes = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
@@ -80,10 +82,31 @@ const deleteNote = asyncHandler(async (req, res) => {
 const getNotesById = asyncHandler(async (req, res) => {
   const { noteId } = req.params;
 
-  const note = await Note.findById(noteId);
+  const casheKey = `note:${noteId}`;
 
+  try {
+    const cacheData = await redisClient.get(casheKey);
+
+    if (cacheData) {
+      const note = JSON.parse(cacheData);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, note, "Note fetched successfully"));
+    }
+  } catch (error) {
+    console.error("redis client interaction failed", error);
+  }
+
+  const note = await Note.findById(noteId);
   if (!note) {
     throw new ApiError(404, "Project note not found");
+  }
+
+  try {
+    const cacheData = JSON.stringify(note);
+    await redisClient.set(casheKey, cacheData, { EX: 3600 });
+  } catch (error) {
+    console.error("redis client interaction failed", error);
   }
 
   return res

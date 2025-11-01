@@ -6,6 +6,7 @@ import ApiResponse from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { TaskStatusEnum } from "../utils/constants.js";
 import { Subtask } from "../models/subTasks.models.js";
+const redisClient = getRedisClient();
 
 const createTask = asyncHandler(async (req, res) => {
   const { title, description, emailId } = req.body;
@@ -54,6 +55,19 @@ const createTask = asyncHandler(async (req, res) => {
 
 const getTasks = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+  const cacheKey = `projectTasks:${projectId}`;
+
+  try {
+    const cacheData = await redisClient.get(cacheKey);
+    const tasks = JSON.parse(cacheData);
+    if (cacheData) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, tasks, "Tasks fetched successfullly"));
+    }
+  } catch (error) {
+    console.error("Redis client interaction failed", error);
+  }
 
   if (!projectId) {
     throw new ApiError(400, "project id is required");
@@ -86,6 +100,13 @@ const getTasks = asyncHandler(async (req, res) => {
 
   if (tasks.length === 0) {
     throw new ApiError(404, "No tasks found");
+  }
+
+  try {
+    const cacheData = JSON.stringify(tasks);
+    await redisClient.set(cacheKey, cacheData, { EX: 3600 });
+  } catch (error) {
+    console.error("Redis client interaction failed", error);
   }
 
   return res
